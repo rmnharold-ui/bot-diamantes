@@ -52,8 +52,10 @@ async function startBot(){
     const from = msg.key.remoteJid;
 
     // === FILTRO: SOLO RESPONDE EN GRUPOS ===
-    console.log("MSG DE:", from);
-    if(!from.endsWith('@g.us')) return;
+    const MI_GRUPO = "120363403947868602@g.us";
+console.log("MSG DE:", from);
+if(from !== MI_GRUPO) return;
+
 
     if(text.includes('diamante') || text.includes('precio') || text.includes('menu') || text.includes('costo') || text.includes('lista')){
       await sock.sendMessage(from, { text: MENU });
