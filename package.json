@@ -4,9 +4,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "postinstall": "npx puppeteer browsers install chrome"
   },
   "dependencies": {
+    "puppeteer": "^22.8.0",
     "whatsapp-web.js": "^1.23.0",
     "qrcode-terminal": "^0.12.0"
   }
