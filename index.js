@@ -16,7 +16,7 @@ const MENU = `💎 *PRECIOS DIAMANTES FREE FIRE* 💎
 💎2398 x 240 mx
 💎6160 x 610 mx
 
-*⭐ 1 VEZ POR ID (MAS BARATO):*
+*⭐ 1 VEZ POR ID:*
 💎110 x $13 mx
 💎341 x 35 mx
 💎572 x 55 mx
@@ -32,10 +32,11 @@ Esperanza Maldonado
 Manda tu ID y comprobante 💰`;
 
 app.get('/', (req,res)=>{
-  if(isConnected) return res.send('<h1>✅ Bot Conectado - Solo tu grupo 120363412663686780</h1>');
+  if(isConnected) return res.send('<h1>✅ Bot Conectado</h1><p>Ya esta escuchando, escribe diamante en tu grupo</p>');
   if(!qrImage) return res.send('<h1>⏳ Iniciando bot... refresca en 10 seg</h1>');
-  res.send(`<center><h2>Escanea este QR con WhatsApp</h2><img src="${qrImage}" width="300"><br><p>Si no carga, refresca</p></center>`);
+  res.send(`<center><h2>Escanea este QR con WhatsApp</h2><img src="${qrImage}" width="300"></center>`);
 });
+
 app.listen(PORT, ()=>console.log('Server en',PORT));
 
 async function startBot(){
@@ -49,9 +50,8 @@ async function startBot(){
     const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || "").toLowerCase();
     const from = msg.key.remoteJid;
     console.log("MSG DE:", from, "TEXTO:", text);
-    const MI_GRUPO = "120363412663686780@g.us"
-    if (from!== MI_GRUPO) return;
     if (text.includes('diamante') || text.includes('precio') || text.includes('lista') || text.includes('menu')) {
+      console.log("RESPONDIENDO MENU A:", from);
       await sock.sendMessage(from, { text: MENU });
     }
   });
