@@ -1,66 +1,38 @@
 const express = require('express');
 const makeWASocket = require('@whiskeysockets/baileys').default;
 const { useMultiFileAuthState, fetchLatestBaileysVersion, DisconnectReason } = require('@whiskeysockets/baileys');
-
+const QRCode = require('qrcode');
 const app = express();
 const PORT = process.env.PORT || 10000;
-let pairingCode = null;
+let qrImage = null;
 let isConnected = false;
-let lastCodeTime = 0;
-
-app.get('/', (req, res) => {
-  if (isConnected) return res.send('<h1 style="font-family:sans-serif;color:green">✅ BOT CONECTADO EXITOSAMENTE</h1>');
-  if (!pairingCode) return res.send('<h1 style="font-family:sans-serif">⌛ Generando codigo... refresca en 5 segundos</h1><script>setTimeout(()=>location.reload(),5000)</script>');
-  const sec = Math.max(0, 60 - Math.floor((Date.now() - lastCodeTime)/1000));
-  res.send(`<div style="font-family:sans-serif;text-align:center;margin-top:50px">
-  <h1>TU CODIGO DE VINCULACION</h1>
-  <h1 style="font-size:50px;letter-spacing:5px;background:#000;color:#fff;padding:20px;border-radius:10px;display:inline-block">${pairingCode}</h1>
-  <p>Expira en ${sec} segundos</p>
-  <p>WhatsApp > Dispositivos vinculados > Vincular con numero de telefono</p>
-  <script>setTimeout(()=>location.reload(),15000)</script>
-  </div>`);
+app.get('/', async (req, res) => {
+  if (isConnected) return res.send('<h1 style="font-family:sans-serif;color:green;text-align:center;margin-top:100px">✅ YA QUEDO CONECTADO HAROLD!</h1>');
+  if (!qrImage) return res.send('<h1 style="font-family:sans-serif;text-align:center;margin-top:100px">⌛ Generando QR... refresca en 5 seg</h1><script>setTimeout(()=>location.reload(),5000)</script>');
+  res.send(`<div style="font-family:sans-serif;text-align:center;margin-top:20px">
+  <h1>ESCANEA ESTE QR</h1>
+  <img src="${qrImage}" style="width:300px;border:10px solid #000;border-radius:20px" />
+  <p>WhatsApp > Dispositivos vinculados > Vincular dispositivo > Escanear QR</p>
+  <p>Se actualiza cada 30 seg</p>
+  <script>setTimeout(()=>location.reload(),20000)</script></div>`);
 });
-
-app.listen(PORT, () => console.log('Servidor en puerto', PORT));
-
+app.listen(PORT, () => console.log('Server', PORT));
 async function startBot(){
   const { version } = await fetchLatestBaileysVersion();
   const { state, saveCreds } = await useMultiFileAuthState('auth_info');
-  const sock = makeWASocket({ 
-    version, 
-    auth: state, 
-    printQRInTerminal: false,
-    browser: ["Ubuntu", "Chrome", "20.0.04"],
-    syncFullHistory: false
-  });
-
+  const sock = makeWASocket({ version, auth: state, printQRInTerminal: false, browser: ["Ubuntu", "Chrome", "20.0.04"] });
   sock.ev.on('creds.update', saveCreds);
-
-  if(!sock.authState.creds.registered){
-     setTimeout(async ()=>{
-       try{
-         let code = await sock.requestPairingCode("523328034948");
-         pairingCode = code;
-         lastCodeTime = Date.now();
-         console.log(`CODIGO: ${code}`);
-       }catch(e){ console.log("Error al pedir codigo", e.message) }
-     }, 3000);
-  }
-
-  sock.ev.on('connection.update', (update)=>{
-    const { connection, lastDisconnect } = update;
-    if(connection === 'open'){
-      isConnected = true;
-      pairingCode = null;
-      console.log('CONECTADO!');
+  sock.ev.on('connection.update', async (update)=>{
+    const { connection, lastDisconnect, qr } = update;
+    if(qr){
+      qrImage = await QRCode.toDataURL(qr);
+      console.log('QR generado');
     }
+    if(connection === 'open'){ isConnected = true; console.log('CONECTADO!'); }
     if(connection === 'close'){
-      isConnected = false;
+      isConnected = false; qrImage = null;
       const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-      if(shouldReconnect){
-        console.log('Reconectando...');
-        setTimeout(startBot, 3000);
-      }
+      if(shouldReconnect) setTimeout(startBot, 3000);
     }
   });
 }
