@@ -1,71 +1,64 @@
 const express = require('express');
-const makeWASocket = require('@whiskeysockets/baileys').default;
-const { useMultiFileAuthState, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const QRCode = require('qrcode');
+
 const app = express();
-const PORT = process.env.PORT || 10000;
-let qrImage = null;
-let isConnected = false;
+const PORT = process.env.PORT || 3000;
+let sock; let qrImage = null; let isConnected = false;
 
-const MENU = `💎 *DIAMANTES FREE FIRE - HAROLD* 💎
+const MENU = `💎 *PRECIOS DIAMANTES FREE FIRE* 💎
 
-*💎 NORMAL*
-💎 110 x $17 MXN
-💎 341 x $45 MXN
-💎 572 x $70 MXN
-💎 1166 x $130 MXN
-💎 2398 x $240 MXN
-💎 6160 x $610 MXN
+*🔥 NORMAL:*
+💎110 x $17 mx
+💎341 x 45 mx
+💎572 x 70 mx
+💎1166 x 130 mx
+💎2398 x 240 mx
+💎6160 x 610 mx
 
-*🔥 1 VEZ POR ID (MAS BARATO)*
-💎 110 x $13 MXN
-💎 341 x $35 MXN
-💎 572 x $55 MXN
-💎 1166 x $100 MXN
-💎 2398 x $190 MXN
-💎 6160 x $460 MXN
+*⭐ 1 VEZ POR ID (MAS BARATO):*
+💎110 x $13 mx
+💎341 x 35 mx
+💎572 x 55 mx
+💎1166 x 100 mx
+💎2389 x 190 mx
+💎6160 x 460 mx
 
-*PAGO:*
-💳 4152 3144 5979 4353
+💳 *PAGO:*
+4152314459794353
 Bancomer BBVA
 Esperanza Maldonado
 
 Manda tu ID y comprobante 💰`;
 
 app.get('/', (req,res)=>{
-  if(isConnected) return res.send('<h1>✅ Bot Conectado - Solo tu grupo</h1>');
-  if(!qrImage) return res.send('<h1>⏳ Iniciando...</h1>');
-  res.send(`<div style="text-align:center"><h2>Escanea el QR</h2><img src="${qrImage}" style="width:300px"/></div>`);
+  if(isConnected) return res.send('<h1>✅ Bot Conectado - Solo tu grupo 120363412663686780</h1>');
+  if(!qrImage) return res.send('<h1>⏳ Iniciando bot... refresca en 10 seg</h1>');
+  res.send(`<center><h2>Escanea este QR con WhatsApp</h2><img src="${qrImage}" width="300"><br><p>Si no carga, refresca</p></center>`);
 });
-app.listen(PORT, ()=>console.log('Server',PORT));
+app.listen(PORT, ()=>console.log('Server en',PORT));
 
 async function startBot(){
   const { version } = await fetchLatestBaileysVersion();
-  const { state, saveCreds } = await useMultiFileAuthState('auth');
-  const sock = makeWASocket({ version, auth: state, browser: ['Bot','Chrome','1.0'] });
+  const { state, saveCreds } = await useMultiFileAuthState('auth_info');
+  sock = makeWASocket({ version, auth: state, browser: ['Bot Diamantes','Chrome','1.0'] });
   sock.ev.on('creds.update', saveCreds);
-
   sock.ev.on('messages.upsert', async (m)=>{
     const msg = m.messages[0];
-    if(!msg.message || msg.key.fromMe) return;
+    if (!msg.message) return;
     const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || "").toLowerCase();
     const from = msg.key.remoteJid;
-
-    // === FILTRO: SOLO RESPONDE EN GRUPOS ===
-    const MI_GRUPO = "120363403947868602@g.us";
-console.log("MSG DE:", from);
-if(from !== MI_GRUPO) return;
-
-
-    if(text.includes('diamante') || text.includes('precio') || text.includes('menu') || text.includes('costo') || text.includes('lista')){
+    console.log("MSG DE:", from, "TEXTO:", text);
+    const MI_GRUPO = "120363412663686780@g.us"
+    if (from!== MI_GRUPO) return;
+    if (text.includes('diamante') || text.includes('precio') || text.includes('lista') || text.includes('menu')) {
       await sock.sendMessage(from, { text: MENU });
     }
   });
-
   sock.ev.on('connection.update', async (u)=>{
     const { connection, qr } = u;
-    if(qr){ qrImage = await QRCode.toDataURL(qr); }
-    if(connection==='open'){ isConnected=true; qrImage=null; console.log('Conectado'); }
+    if(qr){ qrImage = await QRCode.toDataURL(qr); console.log('Nuevo QR'); }
+    if(connection==='open'){ isConnected=true; qrImage=null; console.log('✅ CONECTADO'); }
     if(connection==='close'){ isConnected=false; startBot(); }
   });
 }
