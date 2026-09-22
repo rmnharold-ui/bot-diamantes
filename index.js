@@ -32,7 +32,7 @@ Esperanza Maldonado
 Manda tu ID y comprobante 💰`;
 
 app.get('/', (req,res)=>{
-  if(isConnected) return res.send('<h1>✅ Bot Conectado</h1><p>Ya esta escuchando, escribe diamante en tu grupo</p>');
+  if(isConnected) return res.send('<h1>✅ Bot Conectado</h1><p>Solo responde en tu grupo DIAMANTES</p>');
   if(!qrImage) return res.send('<h1>⏳ Iniciando bot... refresca en 10 seg</h1>');
   res.send(`<center><h2>Escanea este QR con WhatsApp</h2><img src="${qrImage}" width="300"></center>`);
 });
@@ -49,6 +49,8 @@ async function startBot(){
     if (!msg.message) return;
     const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || "").toLowerCase();
     const from = msg.key.remoteJid;
+    const MI_GRUPO = "120363412663686780@g.us";
+    if (from!== MI_GRUPO) return;
     console.log("MSG DE:", from, "TEXTO:", text);
     if (text.includes('diamante') || text.includes('precio') || text.includes('lista') || text.includes('menu')) {
       console.log("RESPONDIENDO MENU A:", from);
